@@ -39,7 +39,7 @@ async function generateJsonFromExcel(excelFilePath, tahunAwal, tahunAkhir) {
 
       if (fs.existsSync(outputFilePath)) {
         console.log(
-          `File JSON untuk desa ${namaDesa} (${kodeDesaStr}) tahun ${tahun} sudah ada.`
+          `File JSON untuk desa ${namaDesa} (${kodeDesaStr}) tahun ${tahun} sudah ada. Dilewati.`
         );
         continue;
       }
@@ -64,11 +64,53 @@ async function generateJsonFromExcel(excelFilePath, tahunAwal, tahunAkhir) {
   }
 }
 
-const args = process.argv.slice(2);
-const excelFilePath = path.join(__dirname, "data", args[0] || "desa.csv");
-const tahunAwal = 2024;
+async function updateCache(cache, cacheFilePath) {
+  fs.writeFileSync(cacheFilePath, JSON.stringify(Array.from(cache), null, 2));
+}
+
+async function processAllCSVs(tahunAwal, tahunAkhir) {
+  const dataFolder = path.join(__dirname, "data");
+  const csvFiles = fs
+    .readdirSync(dataFolder)
+    .filter(
+      (file) =>
+        file.endsWith(".csv") && file !== "desa.csv" && file !== "test.csv"
+    ); // Skip desa.csv dan test.csv
+
+  const cacheFilePath = path.join(__dirname, "cache.json");
+  const processedCache = new Set(); // Cache untuk menyimpan nama file yang sudah diproses
+
+  // Cek file yang sudah diproses sebelumnya
+  if (fs.existsSync(cacheFilePath)) {
+    const cachedData = fs.readFileSync(cacheFilePath, "utf8");
+    const cachedFiles = JSON.parse(cachedData);
+    cachedFiles.forEach((file) => processedCache.add(file));
+  }
+
+  for (const csvFile of csvFiles) {
+    if (processedCache.has(csvFile)) {
+      console.log(`File CSV ${csvFile} sudah diproses sebelumnya.`);
+      continue;
+    }
+
+    const excelFilePath = path.join(dataFolder, csvFile);
+    console.log(`Menggunakan file CSV: ${excelFilePath}`);
+    await generateJsonFromExcel(excelFilePath, tahunAwal, tahunAkhir);
+
+    // Tambahkan file yang telah diproses ke cache dan simpan cache
+    processedCache.add(csvFile);
+    await updateCache(processedCache, cacheFilePath);
+    console.log(`Cache diperbarui dengan file ${csvFile}.`);
+  }
+}
+
+const tahunAwal = 2021;
 const tahunAkhir = new Date().getFullYear();
 
-console.log(`Menggunakan file CSV: ${excelFilePath}`);
-
-generateJsonFromExcel(excelFilePath, tahunAwal, tahunAkhir);
+processAllCSVs(tahunAwal, tahunAkhir)
+  .then(() => {
+    console.log("Proses selesai.");
+  })
+  .catch((err) => {
+    console.error("Terjadi kesalahan:", err);
+  });
