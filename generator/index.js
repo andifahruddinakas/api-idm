@@ -13,7 +13,9 @@ async function fetchIdmData(kodeDesa, tahun) {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching data for ${kodeDesa} in ${tahun}: ${error.message}`);
+    console.error(
+      `Error fetching data for ${kodeDesa} in ${tahun}: ${error.message}`
+    );
     return null;
   }
 }
@@ -36,7 +38,9 @@ async function generateJsonFromExcel(excelFilePath, tahunAwal, tahunAkhir) {
       const outputFilePath = path.join(outputDir, kodeDesaStr, `${tahun}.json`);
 
       if (fs.existsSync(outputFilePath)) {
-        console.log(`File JSON untuk desa ${namaDesa} (${kodeDesaStr}) tahun ${tahun} sudah ada. Dilewati.`);
+        console.log(
+          `File JSON untuk desa ${namaDesa} (${kodeDesaStr}) tahun ${tahun} sudah ada.`
+        );
         continue;
       }
 
@@ -47,25 +51,31 @@ async function generateJsonFromExcel(excelFilePath, tahunAwal, tahunAkhir) {
       }
 
       if (idmResult) {
-        // Minify JSON by removing spaces and line breaks
         fs.writeFileSync(outputFilePath, JSON.stringify(idmResult));
-        console.log(`File JSON untuk desa ${namaDesa} (${kodeDesaStr}) tahun ${tahun} berhasil dibuat.`);
+        console.log(
+          `File JSON untuk desa ${namaDesa} (${kodeDesaStr}) tahun ${tahun} berhasil dibuat.`
+        );
       } else {
-        console.warn(`Tidak ada data untuk desa ${namaDesa} (${kodeDesaStr}) tahun ${tahun}.`);
+        console.warn(
+          `Tidak ada data untuk desa ${namaDesa} (${kodeDesaStr}) tahun ${tahun}.`
+        );
       }
     }
   }
 }
 
 async function updateCache(cache, cacheFilePath) {
-  fs.writeFileSync(cacheFilePath, JSON.stringify(Array.from(cache), null, 2));
+  fs.writeFileSync(cacheFilePath, JSON.stringify(Array.from(cache)));
 }
 
 async function processAllCSVs(tahunAwal, tahunAkhir) {
   const dataFolder = path.join(__dirname, "data");
   const csvFiles = fs
     .readdirSync(dataFolder)
-    .filter((file) => file.endsWith(".csv") && file !== "desa.csv" && file !== "test.csv");
+    .filter(
+      (file) =>
+        file.endsWith(".csv") && file !== "desa.csv" && file !== "test.csv"
+    );
 
   const cacheFilePath = path.join(__dirname, "cache.json");
   const processedCache = new Set();
@@ -88,7 +98,7 @@ async function processAllCSVs(tahunAwal, tahunAkhir) {
 
     processedCache.add(csvFile);
     await updateCache(processedCache, cacheFilePath);
-    console.log(`Cache diperbarui dengan file ${csvFile}.`);
+    console.log(`Cache berhasil diperbarui.`);
   }
 }
 
